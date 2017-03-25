@@ -9,7 +9,7 @@ import {
 } from "@angular/router";
 import {
   WorldMapModule
-} from "worldmap-canvas";
+} from "ng-worldmap";
 /*
  * Platform and Environment providers/directives/pipes
  */

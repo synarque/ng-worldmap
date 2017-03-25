@@ -15,7 +15,7 @@
     "paths": {
       "@angular/*": ["../../../node_modules/@angular/*"],
       "rxjs/*": ["../../../node_modules/rxjs/*"],
-      "worldmap-canvas": ["../../../dist/worldmap-canvas"]
+      "ng-worldmap": ["../../../dist/ng-worldmap"]
     }
   }
 }

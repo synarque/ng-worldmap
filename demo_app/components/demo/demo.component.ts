@@ -1,6 +1,6 @@
 import { Component } from "@angular/core";
 
-import { WorldMapSettings } from "worldmap-canvas";
+import { WorldMapSettings } from "ng-worldmap";
 
 @Component({
   selector: "demo",

@@ -2,7 +2,7 @@
   "extends": "../tsconfig_base.json",
   "compilerOptions": {
     "baseUrl": ".",
-    "outDir": "../dist/worldmap-canvas"
+    "outDir": "../dist/ng-worldmap"
   },
   "include": [
     "index.ts"

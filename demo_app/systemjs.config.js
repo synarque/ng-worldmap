@@ -24,12 +24,12 @@
       // other libraries
       'angular-in-memory-web-api': 'npm:angular-in-memory-web-api/bundles/in-memory-web-api.umd.js',
       'rxjs': 'npm:rxjs',
-      'worldmap-canvas': 'local:worldmap-canvas',
+      'ng-worldmap': 'local:ng-worldmap',
     },
     packages: {
       "rxjs": { defaultExtension: "js" },
       "app": { defaultExtension: "js", main: "index.js" },
-      "worldmap-canvas": { defaultExtension: "js", main: "index.js" }
+      "ng-worldmap": { defaultExtension: "js", main: "index.js" }
     }
   });
 })(this);
