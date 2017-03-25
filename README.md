@@ -1,27 +1,22 @@
-*Code base is by Jon Combe (http://joncom.be/), who released under the MIT license. Thanks Jon!*
+*Code base is by Jon Combe (http://joncom.be/) and Guillaume Gardaud (@gardaud), who released under the MIT license. Thanks to you both!*
 
-This collection of Javascript files allow you to display a flexible worldmap using HTML5 canvas.
+# ng-worldmap
+See dedicated [readme](dataservices/README.md).
 
-Things you can do include:
+# Contributing
+Fork, clone, make changes, test it out, make a PR :)
 
-- Drawing the world map at different zoom levels, in the size of your choice.
-- Customize the colors and border thickness of the map
-- Color countries
-
-Essential files you always need to include are:
-
-- the Jquery library
-- worldmap.js
-
-
-If you wish to dynamically modify the worldmap, you also need to include:
-
-- worldmap-control.js
-- worldmap-control.html provides an example set of HTML controls (needs to be included via PHP/other means).
-
-There are a couple examples included:
-
-- worldmap-example.html is a "read-only" version highlighting several countries.
-- worldmap.php is a dynamic version in which the user can custom repaint the map.
-
-Enjoy!
+# Developers
+Each of the targets presented below is self-standing and does not require any prior execution of another grunt target.
+## Build modules
+```bash
+grunt build
+```
+## Serve test application
+```bash
+grunt serve
+```
+## Publish node modules
+```bash
+grunt publish
+```

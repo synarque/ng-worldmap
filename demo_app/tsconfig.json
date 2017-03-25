@@ -1,0 +1,15 @@
+{
+  "extends": "../tsconfig_base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "outDir": "../dist/demo_app",
+    "paths": {
+      "@angular/*": ["../node_modules/@angular/*"],
+      "rxjs/*": ["../node_modules/rxjs/*"],
+      "worldmap-canvas": ["../dist/worldmap-canvas"]
+    }
+  },
+  "include": [
+    "index.ts"
+  ]
+}

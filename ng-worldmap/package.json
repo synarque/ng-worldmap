@@ -1,0 +1,23 @@
+{
+  "name": "ng-worldmap",
+  "version": "0.0.0-PLACEHOLDER",
+  "description": "Angular Component for a World Map rendering. Based on gardaud/worldmap-canvas.",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com:synarque/ng-worldmap"
+  },
+  "keywords": [],
+  "author": "Alban Gicquel",
+  "license": "ISC",
+  "homepage": "https://github.com/synarque/ng-worldmap",
+  "dependencies": {
+    "@angular/common": "^4.0.0",
+    "@angular/compiler": "^4.0.0",
+    "@angular/core": "^4.0.0",
+    "rxjs": "^5.2.0",
+    "zone.js": "^0.8.5"
+  },
+  "main": "bundles/ng-worldmap.umd.js",
+  "module": "bundles/ng-worldmap.umd.js",
+  "typings": "index.d.ts"
+}

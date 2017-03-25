@@ -1,0 +1,13 @@
+{
+  "extends": "../tsconfig_base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "outDir": "../dist/worldmap-canvas"
+  },
+  "include": [
+    "index.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

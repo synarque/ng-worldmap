@@ -1,0 +1,16 @@
+{
+  "presets": [
+    ["env",
+    {
+      "debug": false,
+      "targets": {
+        "browsers": [
+          "last 2 chrome version",
+          "last 2 safari version",
+          "ie 10-11"
+        ]
+      },
+      "modules": false
+    }]
+  ]
+}
