@@ -1,7 +1,7 @@
 *Code base is by Jon Combe (http://joncom.be/) and Guillaume Gardaud (@gardaud), who released under the MIT license. Thanks to you both!*
 
 # ng-worldmap
-See dedicated [readme](dataservices/README.md).
+See dedicated [readme](ng-worldmap/README.md).
 
 # Contributing
 Fork, clone, make changes, test it out, make a PR :)
