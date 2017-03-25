@@ -138,7 +138,7 @@ module.exports = function (grunt) {
       http: {
         ["create_release-" + moduleName]: {
           options: {
-            uri: 'https://api.github.com/repos/synarque/' + moduleName,
+            uri: 'https://api.github.com/repos/synarque/' + moduleName + '/releases',
             method: 'POST',
             json: true,
             jar: true,
