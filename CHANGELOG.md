@@ -1,3 +1,6 @@
+## [1.0.3]
+- fixed github api call
+
 ## [1.0.2]
 - added tough-cookie dep
 
