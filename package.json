@@ -1,6 +1,6 @@
 {
   "name": "ng-worldmap-src",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Angular Component for a World Map rendering",
   "scripts": {
     "test": "test"

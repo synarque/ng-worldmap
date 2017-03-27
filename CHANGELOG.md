@@ -1,3 +1,6 @@
+## [1.0.4]
+- Fixed default export for babel 6 compat
+
 ## [1.0.3]
 - fixed github api call
 
