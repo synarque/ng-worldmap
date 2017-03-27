@@ -85,7 +85,6 @@ export class WorldMapComponent implements AfterViewInit, OnChanges {
   }
 
   ngOnChanges(changes) {
-    console.dir(changes);
     if (changes["settings"] && this._canvas) {
       if (changes["settings"].currentValue) {
         this._settings = changes["settings"].currentValue;
