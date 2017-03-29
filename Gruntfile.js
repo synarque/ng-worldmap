@@ -174,21 +174,8 @@ module.exports = function (grunt) {
     },
     jshint: {
       options: {
-        "bitwise": true,
-        "browser": true,
-        "curly": true,
-        "eqeqeq": true,
-        "esnext": true,
-        "noarg": true,
-        "node": true,
-        "strict": true,
-        "undef": true,
-        "unused": true,
-        "jasmine": true,
-        "latedef": "nofunc",
-        "validthis": true,
-        "globals": {},
-        "reporter": require('jshint-stylish')
+        jshintrc: true,
+        reporter: require('jshint-stylish')
       },
       default: {
         files: {
