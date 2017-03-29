@@ -1,3 +1,6 @@
+## [1.0.8]
+- fix missing exports in index.ts
+
 ## [1.0.7]
 - Added events, countr names, metrics
 
