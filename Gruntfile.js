@@ -199,8 +199,7 @@ module.exports = function (grunt) {
               serveStatic('dist/demo_app'),
               connect().use('/node_modules', serveStatic('./node_modules')),
               connect().use('/local_modules', serveStatic('./dist')),
-              serveStatic('eikonlibrary-ui'),
-              serveStatic('dataservices'),
+              serveStatic('ng-worldmap')
             ];
           }
         }

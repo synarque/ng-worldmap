@@ -8,7 +8,7 @@
   },
   "keywords": [],
   "author": "Alban Gicquel",
-  "license": "ISC",
+  "license": "MIT",
   "homepage": "https://github.com/synarque/ng-worldmap",
   "dependencies": {
     "@angular/common": "^4.0.0",
