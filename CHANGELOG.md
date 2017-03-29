@@ -1,3 +1,6 @@
+## [1.0.6]
+- improve js linting
+
 ## [1.0.5]
 - plunker + license fix
 
