@@ -1,3 +1,6 @@
+## [1.0.7]
+- Added events, countr names, metrics
+
 ## [1.0.6]
 - improve js linting
 
