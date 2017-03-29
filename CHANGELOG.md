@@ -1,3 +1,6 @@
+## [1.0.5]
+- plunker + license fix
+
 ## [1.0.4]
 - Fixed default export for babel 6 compat
 
