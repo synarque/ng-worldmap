@@ -15,7 +15,7 @@
     "canvas"
   ],
   "author": "Alban Gicquel",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/synarque/ng-worldmap/issues"
   },

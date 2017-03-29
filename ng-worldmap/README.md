@@ -2,6 +2,8 @@
 A component wrapping gardaud/worldmap-canvas in an Angular component.
 
 # Using the API
+## TL-DR
+https://embed.plnkr.co/7rIrzJNmGFJBXshvOXpp/
 ## Installing
 Install the npm package:
 ```bash

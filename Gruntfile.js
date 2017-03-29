@@ -120,7 +120,8 @@ module.exports = function (grunt) {
             cwd: moduleName,
             dest: baseOutDir + moduleName,
             src: [
-              'README.md'
+              'README.md',
+              'LICENSE'
             ]
           }]
         }
