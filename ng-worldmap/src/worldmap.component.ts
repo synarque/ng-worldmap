@@ -175,9 +175,10 @@ export class WorldMapComponent implements AfterViewInit, OnChanges {
     // loop through paths
     let bIE = (navigator.userAgent.indexOf("MSIE") > -1);
     for (let path = 0; path < country.shape.length; path++) {
-      this._context.moveTo((country.shape[path][0][0] * this._ratio) - this._drawOffsetX, (country.shape[path][0][1] * this._ratio) - this._drawOffsetY);
-      for (let coord = 1; coord < country.shape[path].length; coord++) {
-        this._context.lineTo((country.shape[path][coord][0] * this._ratio) - this._drawOffsetX, (country.shape[path][coord][1] * this._ratio) - this._drawOffsetY);
+      let _path = country.shape[path];
+      this._context.moveTo((_path[0][0] * this._ratio) - this._drawOffsetX, (_path[0][1] * this._ratio) - this._drawOffsetY);
+      for (let coord = 1; coord < _path.length; coord++) {
+        this._context.lineTo((_path[coord][0] * this._ratio) - this._drawOffsetX, (_path[coord][1] * this._ratio) - this._drawOffsetY);
       }
       this._context.closePath();
       if (this._context.isPointInPath(this._mouseX, this._mouseY)) {
@@ -196,9 +197,9 @@ export class WorldMapComponent implements AfterViewInit, OnChanges {
       // IE, again...
       if (bIE) {
         this._context.beginPath();
-        this._context.moveTo((country.shape[path][0][0] * this._ratio) - this._drawOffsetX, (country.shape[path][0][1] * this._ratio) - this._drawOffsetY);
+        this._context.moveTo((_path[0][0] * this._ratio) - this._drawOffsetX, (_path[0][1] * this._ratio) - this._drawOffsetY);
         for (let coord = 1; coord < country.shape[path].length; coord++) {
-          this._context.lineTo((country.shape[path][coord][0] * this._ratio) - this._drawOffsetX, (country.shape[path][coord][1] * this._ratio) - this._drawOffsetY);
+          this._context.lineTo((_path[coord][0] * this._ratio) - this._drawOffsetX, (_path[coord][1] * this._ratio) - this._drawOffsetY);
         }
         this._context.closePath();
       }
@@ -208,8 +209,8 @@ export class WorldMapComponent implements AfterViewInit, OnChanges {
     // awful hack for Lesotho / South Africa (draw Lesotho again, kids!)
     if (country.alpha2 === "za") {
       // choose colour
-      if (this._settings.detail["ls"]) {
-        this._context.fillStyle = this._settings.detail["ls"];
+      if (this._settings.detail.ls) {
+        this._context.fillStyle = this._settings.detail.ls;
       } else {
         this._context.fillStyle = this._settings.fgColor;
       }
@@ -218,9 +219,10 @@ export class WorldMapComponent implements AfterViewInit, OnChanges {
       this._context.beginPath();
       let _lesotho = countriesDictionnary.get("ls");
       for (let path = 0; path < _lesotho.shape.length; path++) {
-        this._context.moveTo((_lesotho.shape[path][0][0] * this._ratio) - this._drawOffsetX, (_lesotho.shape[path][0][1] * this._ratio) - this._drawOffsetY);
+        let _path = _lesotho.shape[path];
+        this._context.moveTo((_path[0][0] * this._ratio) - this._drawOffsetX, (_path[0][1] * this._ratio) - this._drawOffsetY);
         for (let coord = 1; coord < _lesotho.shape[path].length; coord++) {
-          this._context.lineTo((_lesotho.shape[path][coord][0] * this._ratio) - this._drawOffsetX, (_lesotho.shape[path][coord][1] * this._ratio) - this._drawOffsetY);
+          this._context.lineTo((_path[coord][0] * this._ratio) - this._drawOffsetX, (_path[coord][1] * this._ratio) - this._drawOffsetY);
         }
         this._context.closePath();
         this._context.fill();
