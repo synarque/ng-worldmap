@@ -1,3 +1,6 @@
+## [1.1.1]
+- reinstate default export
+
 ## [1.1.0]
 - now using raphael for rendering
 - small optimization
