@@ -1,3 +1,7 @@
+## [1.1.0]
+- now using raphael for rendering
+- small optimization
+
 ## [1.0.8]
 - fix missing exports in index.ts
 
