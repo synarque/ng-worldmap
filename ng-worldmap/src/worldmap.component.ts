@@ -8,6 +8,8 @@ import {
   EventEmitter
 } from "@angular/core";
 
+import * as Raphael from "raphael";
+
 export class WorldMapSettings {
   constructor(
     public detail: any = {},
@@ -27,20 +29,26 @@ export class Metrics {
 
 @Component({
   selector: "world-map",
-  template: "<canvas #canvas (mousemove)='onMouseMove($event)' (mouseup)='onMouseUp($event)'></canvas>",
+  template: "<div #container class='container' (mousemove)='onMouseMove($event)' (mouseup)='onMouseUp($event)'></div>",
   styles: [
-    `:host { display: flex; } canvas { flex: 1 1 auto; }`
+    `:host {
+       display: flex;
+       flex-direction: column;
+     }
+     .container {
+       flex: 1 1 auto;
+    }
+    /deep/ .country:hover {
+      fill: #f93;
+    }`
   ]
 })
 export class WorldMapComponent implements AfterViewInit, OnChanges {
-  @ViewChild("canvas") private _canvasRef: ElementRef;
-  private _canvas: HTMLCanvasElement;
-  private _context: CanvasRenderingContext2D;
+  @ViewChild("container") private _containerRef: ElementRef;
+  private _container: HTMLElement;
 
   private _offsetX: number = 0;
   private _offsetY: number = 0;
-  private _mouseX: number = 0;
-  private _mouseY: number = 0;
 
   private _canvasWidth: number = 0;
   private _canvasHeight: number = 0;
@@ -49,14 +57,7 @@ export class WorldMapComponent implements AfterViewInit, OnChanges {
   private _drawOffsetY: number = 0;
   private _ratio: number = 0;
 
-  private _lastFrameTime = Date.now();
-  private _startTime = this._lastFrameTime;
-  private _fps: number[] = [0, 0, 0, 0, 0];
-  private _drawTime: number[] = [0, 0, 0, 0, 0];
-  private _frameCount = 0;
-
-  private _currentCountry: Country = null;
-  private _wasInCountry: boolean = false;
+  private _paper: RaphaelPaper;
 
   private _settings: WorldMapSettings = new WorldMapSettings();
   @Input() public settings: WorldMapSettings;
@@ -68,39 +69,12 @@ export class WorldMapComponent implements AfterViewInit, OnChanges {
   constructor() { }
 
   ngAfterViewInit() {
-    this._canvas = this._canvasRef.nativeElement as HTMLCanvasElement;
-    this._canvas.style.backgroundColor = this._settings.bgColor;
+    this._container = this._containerRef.nativeElement as HTMLElement;
+    this._container.style.backgroundColor = this._settings.bgColor;
 
-    this._context = this._canvas.getContext("2d");
-    window.requestAnimationFrame(this.draw.bind(this));
-  }
 
-  ngOnChanges(changes) {
-    if (changes["settings"] && this._canvas) {
-      if (changes["settings"].currentValue) {
-        this._settings = changes["settings"].currentValue;
-        this._canvas.style.backgroundColor = this._settings.bgColor;
-      }
-    }
-  }
-
-  draw() {
-    this._startTime = Date.now();
-    let _elapsed = this._startTime - this._lastFrameTime;
-    this._lastFrameTime = this._startTime;
-    this._fps.unshift(Math.floor(1000 / _elapsed));
-    this._fps.pop();
-
-    this._wasInCountry = false;
-
-    this._canvas.width = this._canvasWidth = this._canvas.clientWidth;
-    this._canvas.height = this._canvasHeight = this._canvas.clientHeight;
-
-    this._offsetX = this._canvas.offsetLeft;
-    this._offsetY = this._canvas.offsetTop;
-
-    this._context.clearRect(0, 0, this._canvasWidth, this._canvasHeight);
-    this._context.lineWidth = this._settings.borderWidth ? this._settings.borderWidth : 0;
+    this._offsetX = this._container.offsetLeft;
+    this._offsetY = this._container.offsetTop;
 
     // calculate zoom: create variables
     let aZoom = this._settings.zoom.split(",");
@@ -124,121 +98,62 @@ export class WorldMapComponent implements AfterViewInit, OnChanges {
     }
 
     // calculate zoom ratio
-    this._ratio = Math.min(((this._canvasWidth - this._settings.padding) / (maxX - minX)), ((this._canvasHeight - this._settings.padding) / (maxY - minY)));
+    this._ratio = Math.min(((this._container.clientWidth - this._settings.padding) / (maxX - minX)), ((this._container.clientHeight - this._settings.padding) / (maxY - minY)));
 
     // calculate zoom offsets
     let midX = (minX + ((maxX - minX) / 2));
     let midY = (minY + ((maxY - minY) / 2));
-    this._drawOffsetX = ((midX * this._ratio) - (this._canvasWidth / 2));
-    this._drawOffsetY = ((midY * this._ratio) - (this._canvasHeight / 2));
+    this._drawOffsetX = ((midX * this._ratio) - (this._container.clientWidth / 2));
+    this._drawOffsetY = ((midY * this._ratio) - (this._container.clientHeight / 2));
 
-    // draw "plain" countries
+    this._paper = Raphael(this._container, this._container.clientWidth, this._container.clientHeight);
     for (let country of countriesDictionnary) {
-      this.drawCountry(country[1], this._settings.fgColor);
+      this.drawCountryRaphael(country[1], this._settings.fgColor);
     }
-
-    // draw "details" countries
-    for (let sCountry in this._settings.detail) {
-      if (countriesDictionnary.has(sCountry)) {
-        this.drawCountry(countriesDictionnary.get(sCountry), this._settings.detail[sCountry]);
-      }
-    }
-
-    if (this._wasInCountry === false) {
-      if (this._currentCountry) {
-        this.countryLeave.emit(this._currentCountry);
-        this._currentCountry = null;
-      }
-    }
-
-    this._drawTime.unshift(Date.now() - this._startTime);
-    this._drawTime.pop();
-
-    if ((this._frameCount++ % 5) === 0) {
-      this.metrics.emit(new Metrics(
-        this._fps.reduce((v, c) => {
-          return c + v;
-        }, 0) / 5,
-        this._drawTime.reduce((v, c) => {
-          return c + v;
-        }, 0) / 5));
-    }
-
-    window.requestAnimationFrame(this.draw.bind(this));
+    this.drawCountryRaphael(countriesDictionnary.get("ls"), this._settings.fgColor);
   }
 
-  drawCountry(country: Country, sColor: string) {
-    this._context.fillStyle = sColor;
-    this._context.strokeStyle = this._settings.borderColor;
-    this._context.beginPath();
+  ngOnChanges(changes) {
+    if (changes["settings"] && this._container) {
+      if (changes["settings"].currentValue) {
+        this._settings = changes["settings"].currentValue;
+        this._container.style.backgroundColor = this._settings.bgColor;
+      }
+    }
+  }
 
+  drawCountryRaphael(country: Country, sColor: string) {
     // loop through paths
-    let bIE = (navigator.userAgent.indexOf("MSIE") > -1);
+    let _svgPathString = "";
     for (let path = 0; path < country.shape.length; path++) {
-      this._context.moveTo((country.shape[path][0][0] * this._ratio) - this._drawOffsetX, (country.shape[path][0][1] * this._ratio) - this._drawOffsetY);
-      for (let coord = 1; coord < country.shape[path].length; coord++) {
-        this._context.lineTo((country.shape[path][coord][0] * this._ratio) - this._drawOffsetX, (country.shape[path][coord][1] * this._ratio) - this._drawOffsetY);
+      let _path = country.shape[path];
+      _svgPathString +=
+        "M"
+        + ((_path[0][0] * this._ratio) - this._drawOffsetX)
+        + ","
+        + ((_path[0][1] * this._ratio) - this._drawOffsetY);
+      for (let coord = 1; coord < _path.length; coord++) {
+        _svgPathString +=
+          "L"
+          + ((_path[coord][0] * this._ratio) - this._drawOffsetX)
+          + ","
+          + ((_path[coord][1] * this._ratio) - this._drawOffsetY);
       }
-      this._context.closePath();
-      if (this._context.isPointInPath(this._mouseX, this._mouseY)) {
-        this._wasInCountry = true;
-        this._context.fillStyle = this._settings.highlightColor;
-        if (this._currentCountry !== country) {
-          if (this._currentCountry) {
-            this.countryLeave.emit(this._currentCountry);
-          }
-          this._currentCountry = country;
-          this.countryEnter.emit(country);
-        }
-      }
-      this._context.fill();
+      _svgPathString += "Z";
 
-      // IE, again...
-      if (bIE) {
-        this._context.beginPath();
-        this._context.moveTo((country.shape[path][0][0] * this._ratio) - this._drawOffsetX, (country.shape[path][0][1] * this._ratio) - this._drawOffsetY);
-        for (let coord = 1; coord < country.shape[path].length; coord++) {
-          this._context.lineTo((country.shape[path][coord][0] * this._ratio) - this._drawOffsetX, (country.shape[path][coord][1] * this._ratio) - this._drawOffsetY);
-        }
-        this._context.closePath();
-      }
-      this._context.stroke();
-    }
-
-    // awful hack for Lesotho / South Africa (draw Lesotho again, kids!)
-    if (country.alpha2 === "za") {
-      // choose colour
-      if (this._settings.detail["ls"]) {
-        this._context.fillStyle = this._settings.detail["ls"];
-      } else {
-        this._context.fillStyle = this._settings.fgColor;
-      }
-
-      // loop through paths
-      this._context.beginPath();
-      let _lesotho = countriesDictionnary.get("ls");
-      for (let path = 0; path < _lesotho.shape.length; path++) {
-        this._context.moveTo((_lesotho.shape[path][0][0] * this._ratio) - this._drawOffsetX, (_lesotho.shape[path][0][1] * this._ratio) - this._drawOffsetY);
-        for (let coord = 1; coord < _lesotho.shape[path].length; coord++) {
-          this._context.lineTo((_lesotho.shape[path][coord][0] * this._ratio) - this._drawOffsetX, (_lesotho.shape[path][coord][1] * this._ratio) - this._drawOffsetY);
-        }
-        this._context.closePath();
-        this._context.fill();
-        this._context.stroke();
-      }
-    }
-  }
-
-  onMouseMove(e: MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    this._mouseX = e.clientX - this._offsetX;
-    this._mouseY = e.clientY - this._offsetY;
-  }
-
-  onMouseUp() {
-    if (this._currentCountry) {
-      this.countryClick.emit(this._currentCountry);
+      let _svgPath = this._paper.path(_svgPathString);
+      _svgPath.attr("fill", sColor);
+      _svgPath.attr("stroke", this._settings.borderColor);
+      _svgPath.attr("class", "country");
+      _svgPath.mouseup(() => {
+        this.countryClick.emit(country);
+      });
+      _svgPath.mouseover(() => {
+        this.countryEnter.emit(country);
+      });
+      _svgPath.mouseout(() => {
+        this.countryLeave.emit(country);
+      });
     }
   }
 }
