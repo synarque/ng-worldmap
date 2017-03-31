@@ -2,7 +2,9 @@
  * System configuration for Angular samples
  * Adjust as necessary for your application needs.
  */
-(function (global) {
+/* global System */
+'use strict';
+(function () {
   System.config({
     paths: {
       // paths serve as alias
@@ -25,6 +27,7 @@
       'angular-in-memory-web-api': 'npm:angular-in-memory-web-api/bundles/in-memory-web-api.umd.js',
       'rxjs': 'npm:rxjs',
       'ng-worldmap': 'local:ng-worldmap',
+      'raphael': 'npm:raphael/raphael.min.js'
     },
     packages: {
       "rxjs": { defaultExtension: "js" },
@@ -32,4 +35,4 @@
       "ng-worldmap": { defaultExtension: "js", main: "index.js" }
     }
   });
-})(this);
+})();

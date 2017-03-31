@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "module": "commonjs",
+    "moduleResolution": "node",
     "target": "es6",
     "declaration": true,
     "noImplicitAny": false,
@@ -8,14 +9,21 @@
     "sourceRoot": "/",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
     "typeRoots": [
       "./node_modules/@types/",
       "./typings/"
     ],
     "paths": {
-      "@angular/*": ["../../../node_modules/@angular/*"],
-      "rxjs/*": ["../../../node_modules/rxjs/*"],
-      "ng-worldmap": ["../../../dist/ng-worldmap"]
+      "@angular/*": [
+        "../node_modules/@angular/*"
+      ],
+      "rxjs/*": [
+        "../node_modules/rxjs/*"
+      ],
+      "ng-worldmap": [
+        "../dist/ng-worldmap"
+      ]
     }
   }
 }

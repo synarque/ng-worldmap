@@ -20,8 +20,9 @@ module.exports = function (grunt) {
 
   let pkg = grunt.file.readJSON('package.json');
 
-  let buildModuleConfig = function (moduleName) {
-    return {
+  let buildModuleConfig = function (moduleDef) {
+    let moduleName = moduleDef.module;
+    let _result = {
       ts: {
         [moduleName]: {
           tsconfig: {
@@ -43,12 +44,25 @@ module.exports = function (grunt) {
             format: 'umd',
             moduleName: moduleName,
             sourceMap: true,
+            globals: {
+              '@angular/core': 'core',
+              '@angular/common': 'common',
+              '@angular/platform-browser': 'platformBrowser',
+              '@angular/platform-browser-dynamic': 'platformBrowserDynamic',
+              '@angular/router': 'router',
+              'raphael': 'Raphael',
+            },
             external: [
               '@angular/core',
+              '@angular/common',
+              '@angular/router',
+              '@angular/platform-browser',
+              '@angular/platform-browser-dynamic',
               '@angular/common',
               'rxjs/Observable',
               'rxjs/Subject',
               'rxjs/add/operator/toPromise',
+              'raphael'
             ],
             plugins: function () {
               return [
@@ -91,6 +105,13 @@ module.exports = function (grunt) {
         },
       }
     };
+
+    moduleDef.localDependencies.forEach((dep) => {
+      _result.rollup[moduleName].options.external.push(dep);
+      _result.rollup[moduleName].options.globals[dep] = dep;
+    });
+
+    return _result;
   };
 
   let buildPublishConfig = function (moduleName, newVersion) {
@@ -345,12 +366,12 @@ module.exports = function (grunt) {
   });
 
   let modulesList = [
-    { module: "ng-worldmap", published: true },
-    { module: "demo_app", published: false }
+    { module: "ng-worldmap", published: true, localDependencies: [] },
+    { module: "demo_app", published: false, localDependencies: ['ng-worldmap'] }
   ];
 
   modulesList.forEach((moduleDef) => {
-    grunt.config.merge(buildModuleConfig(moduleDef.module));
+    grunt.config.merge(buildModuleConfig(moduleDef));
   });
 
   grunt.registerTask('build', [
@@ -406,6 +427,6 @@ module.exports = function (grunt) {
 
   grunt.registerTask('delay', function () {
     var done = this.async();
-    setTimeout(function(){done();}, 1000);
+    setTimeout(function () { done(); }, 1000);
   });
 };
