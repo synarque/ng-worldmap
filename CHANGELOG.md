@@ -1,3 +1,6 @@
+## [1.2.0]
+- moved to raphael rendering + customization
+
 ## [1.1.1]
 - reinstate default export
 
