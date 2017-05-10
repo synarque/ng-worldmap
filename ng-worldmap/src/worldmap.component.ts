@@ -4,46 +4,62 @@ import {
   ElementRef,
   AfterViewInit,
   Input, Output,
-  OnChanges,
-  EventEmitter
+  EventEmitter,
+  NgZone
 } from "@angular/core";
+
+import { Observable } from "rxjs/Observable";
+
+import "rxjs/add/operator/debounceTime";
+import "rxjs/add/observable/fromEvent";
 
 import * as Raphael from "raphael";
 
-export class WorldMapSettings {
+const defaultBgColor: string = "#c2c2c2";
+const defaultFgColor: string = "#e2e2e2";
+const defaultHighlightColor: string = "#f93";
+const defaultBorderColor: string = "#a0a0a0";
+const defaultBorderWidth: number = 1;
+const defaultPadding: number = 1;
+const defaultZoom: string = "fr,gb";
+
+export class CountryCustomization {
   constructor(
-    public detail: any = {},
-    public bgColor: string = "#c2c2c2",
-    public fgColor: string = "#e2e2e2",
-    public highlightColor: string = "#f93",
-    public borderColor: string = "#a0a0a0",
-    public borderWidth: number = 1,
-    public padding: number = 1,
-    public zoom: string = "ca,cl,us,ru"
+    public color: string = defaultFgColor,
+    public highlightColor = defaultHighlightColor,
+    public borderColor = defaultBorderColor,
+    public borderWidth = defaultBorderWidth
   ) { }
 }
 
-export class Metrics {
-  constructor(public averageFps: number, public averageDrawTime: number) { }
+export class WorldMapSettings {
+  constructor(
+    public bgColor: string = defaultBgColor,
+    public fgColor: string = defaultFgColor,
+    public highlightColor: string = defaultHighlightColor,
+    public borderColor: string = defaultBorderColor,
+    public borderWidth: number = defaultBorderWidth,
+    public customizations: Map<string, CountryCustomization> = new Map<string, CountryCustomization>()
+  ) { }
 }
 
 @Component({
   selector: "world-map",
-  template: "<div #container class='container' (mousemove)='onMouseMove($event)' (mouseup)='onMouseUp($event)'></div>",
+  template: "<div #container class='container'></div>",
   styles: [
     `:host {
        display: flex;
-       flex-direction: column;
      }
      .container {
        flex: 1 1 auto;
-    }
-    /deep/ .country:hover {
-      fill: #f93;
-    }`
+     }
+     /deep/ svg {
+       max-width: 100%;
+       max-height: 100%;
+     }`
   ]
 })
-export class WorldMapComponent implements AfterViewInit, OnChanges {
+export class WorldMapComponent implements AfterViewInit {
   @ViewChild("container") private _containerRef: ElementRef;
   private _container: HTMLElement;
 
@@ -57,69 +73,121 @@ export class WorldMapComponent implements AfterViewInit, OnChanges {
   private _drawOffsetY: number = 0;
   private _ratio: number = 0;
 
+  private _minX: number = Number.MAX_VALUE;
+  private _minY: number = Number.MAX_VALUE;
+  private _maxX: number = 0;
+  private _maxY: number = 0;
+
   private _paper: RaphaelPaper;
+  private _countries: Map<string, RaphaelPath> = new Map<string, RaphaelPath>();
 
   private _settings: WorldMapSettings = new WorldMapSettings();
-  @Input() public settings: WorldMapSettings;
-  @Output() public metrics: EventEmitter<Metrics> = new EventEmitter<Metrics>();
   @Output() public countryEnter: EventEmitter<Country> = new EventEmitter<Country>();
   @Output() public countryLeave: EventEmitter<Country> = new EventEmitter<Country>();
   @Output() public countryClick: EventEmitter<Country> = new EventEmitter<Country>();
 
-  constructor() { }
+  constructor(private _ngZone: NgZone) { }
 
   ngAfterViewInit() {
     this._container = this._containerRef.nativeElement as HTMLElement;
     this._container.style.backgroundColor = this._settings.bgColor;
 
-
-    this._offsetX = this._container.offsetLeft;
-    this._offsetY = this._container.offsetTop;
-
-    // calculate zoom: create variables
-    let aZoom = this._settings.zoom.split(",");
-    let zoomZero = countriesDictionnary.get(aZoom[0]);
-    let minX = zoomZero.shape[0][0][0];
-    let maxX = zoomZero.shape[0][0][0];
-    let minY = zoomZero.shape[0][0][1];
-    let maxY = zoomZero.shape[0][0][1];
-
     // calculate zoom: find map range
-    for (let country = 0; country < aZoom.length; country++) {
-      let _country = countriesDictionnary.get(aZoom[country]);
+    for (let country of countriesDictionnary) {
+      let _country = country[1];
       for (let path = 0; path < _country.shape.length; path++) {
         for (let coord = 0; coord < _country.shape[path].length; coord++) {
-          minX = Math.min(minX, _country.shape[path][coord][0]);
-          maxX = Math.max(maxX, _country.shape[path][coord][0]);
-          minY = Math.min(minY, _country.shape[path][coord][1]);
-          maxY = Math.max(maxY, _country.shape[path][coord][1]);
+          this._minX = Math.min(this._minX, _country.shape[path][coord][0]);
+          this._maxX = Math.max(this._maxX, _country.shape[path][coord][0]);
+          this._minY = Math.min(this._minY, _country.shape[path][coord][1]);
+          this._maxY = Math.max(this._maxY, _country.shape[path][coord][1]);
         }
       }
     }
-
-    // calculate zoom ratio
-    this._ratio = Math.min(((this._container.clientWidth - this._settings.padding) / (maxX - minX)), ((this._container.clientHeight - this._settings.padding) / (maxY - minY)));
-
-    // calculate zoom offsets
-    let midX = (minX + ((maxX - minX) / 2));
-    let midY = (minY + ((maxY - minY) / 2));
-    this._drawOffsetX = ((midX * this._ratio) - (this._container.clientWidth / 2));
-    this._drawOffsetY = ((midY * this._ratio) - (this._container.clientHeight / 2));
 
     this._paper = Raphael(this._container, this._container.clientWidth, this._container.clientHeight);
     for (let country of countriesDictionnary) {
       this.drawCountryRaphael(country[1], this._settings.fgColor);
     }
     this.drawCountryRaphael(countriesDictionnary.get("ls"), this._settings.fgColor);
+    this.applyCustomizations();
+    let _ratio = this._container.clientHeight / this._container.clientWidth;
+    this._paper.setViewBox(this._minX, this._minY, this._maxX - this._minX, this._maxY - this._minY, true);
+
+    this._ngZone.runOutsideAngular(() => {
+      Observable.fromEvent<UIEvent>(window, "resize")
+        .debounceTime(250)
+        .subscribe(uiEvent => {
+          this._ngZone.run(() => this.doResize());
+        });
+    });
   }
 
-  ngOnChanges(changes) {
-    if (changes["settings"] && this._container) {
-      if (changes["settings"].currentValue) {
-        this._settings = changes["settings"].currentValue;
-        this._container.style.backgroundColor = this._settings.bgColor;
+  public setBackgroundColor(color: string) {
+    this._settings.bgColor = color;
+    this.applyCustomizations();
+  }
+
+  public setForegroundColor(color: string) {
+    this._settings.fgColor = color;
+    this.applyCustomizations();
+  }
+
+  public setHighlightColor(color: string) {
+    this._settings.highlightColor = color;
+    this.applyCustomizations();
+  }
+
+  public setBorderColor(color: string) {
+    this._settings.borderColor = color;
+    this.applyCustomizations();
+  }
+
+  public setBorderWidth(width: number) {
+    this._settings.borderWidth = width;
+    this.applyCustomizations();
+  }
+
+  public setCustomization(countryCode: string, customization: CountryCustomization) {
+    this._settings.customizations.set(countryCode, customization);
+    this.applyCustomizations();
+  }
+
+  public resetCustomization(countryCode: string) {
+    this._settings.customizations.delete(countryCode);
+    this.applyCustomizations();
+  }
+
+  public setCustomizations(customizations: Map<string, CountryCustomization>) {
+    this._settings.customizations = customizations;
+    this.applyCustomizations();
+  }
+
+  public clearCustomizations() {
+    this._settings.customizations.clear();
+    this.applyCustomizations();
+  }
+
+  private doResize() {
+    this._paper.setSize(this._container.clientWidth, this._container.clientHeight);
+  }
+
+  private applyCustomizations() {
+    this._container.style.backgroundColor = this._settings.bgColor;
+    for (let kvp of this._countries) {
+      let _alpha2 = kvp[0];
+      let _country = kvp[1];
+      if (this._settings.customizations.has(_alpha2)) {
+        let _customization = this._settings.customizations.get(_alpha2);
+        _country.attr("fill", _customization.color);
+        _country.attr("stroke", _customization.borderColor);
+        _country.attr("stroke-width", _customization.borderWidth);
+      } else {
+        _country.attr("fill", this._settings.fgColor);
+        _country.attr("stroke", this._settings.borderColor);
+        _country.attr("stroke-width", this._settings.borderWidth);
       }
-    }
+    };
   }
 
   drawCountryRaphael(country: Country, sColor: string) {
@@ -128,33 +196,36 @@ export class WorldMapComponent implements AfterViewInit, OnChanges {
     for (let path = 0; path < country.shape.length; path++) {
       let _path = country.shape[path];
       _svgPathString +=
-        "M"
-        + ((_path[0][0] * this._ratio) - this._drawOffsetX)
-        + ","
-        + ((_path[0][1] * this._ratio) - this._drawOffsetY);
+        "M" + _path[0][0] + "," + _path[0][1];
       for (let coord = 1; coord < _path.length; coord++) {
         _svgPathString +=
-          "L"
-          + ((_path[coord][0] * this._ratio) - this._drawOffsetX)
-          + ","
-          + ((_path[coord][1] * this._ratio) - this._drawOffsetY);
+          "L" + _path[coord][0] + "," + _path[coord][1];
       }
       _svgPathString += "Z";
-
-      let _svgPath = this._paper.path(_svgPathString);
-      _svgPath.attr("fill", sColor);
-      _svgPath.attr("stroke", this._settings.borderColor);
-      _svgPath.attr("class", "country");
-      _svgPath.mouseup(() => {
-        this.countryClick.emit(country);
-      });
-      _svgPath.mouseover(() => {
-        this.countryEnter.emit(country);
-      });
-      _svgPath.mouseout(() => {
-        this.countryLeave.emit(country);
-      });
     }
+
+    let _svgPath = this._paper.path(_svgPathString);
+    _svgPath.attr("class", "country");
+    _svgPath.mouseup(() => {
+      this.countryClick.emit(country);
+    });
+    _svgPath.mouseover(() => {
+      if (this._settings.customizations.has(country.alpha2)) {
+        _svgPath.attr("fill", this._settings.customizations.get(country.alpha2).highlightColor);
+      } else {
+        _svgPath.attr("fill", this._settings.highlightColor);
+      }
+      this.countryEnter.emit(country);
+    });
+    _svgPath.mouseout(() => {
+      if (this._settings.customizations.has(country.alpha2)) {
+        _svgPath.attr("fill", this._settings.customizations.get(country.alpha2).color);
+      } else {
+        _svgPath.attr("fill", this._settings.fgColor);
+      }
+      this.countryLeave.emit(country);
+    });
+    this._countries.set(country.alpha2, _svgPath);
   }
 }
 

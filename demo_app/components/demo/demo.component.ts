@@ -1,39 +1,34 @@
-import { Component } from "@angular/core";
+import { Component, ViewChild, AfterViewInit } from "@angular/core";
 
-import { WorldMapSettings, Metrics, Country } from "ng-worldmap";
+import { WorldMapComponent, Country, CountryCustomization } from "ng-worldmap";
 
 @Component({
   selector: "demo",
   template: `
     <div>
-      <span>Avg fps: {{metrics.averageFps}}</span>
-      <span>Avg Draw: {{metrics.averageDrawTime}}</span>
-    </div>
-    <div>
       <span>Current country: {{currentCountry}}</span>
       <span>Last click: {{lastClick}}</span>
+      <span (click)="goGreen()">Go Green</span>
+      <span (click)="goRed()">Go Red</span>
+      <span (click)="goBlack()">Go Black</span>
     </div>
     <world-map
-      [settings]="setting"
-      (metrics)="onMetrics($event)"
+      #theMap
       (countryEnter)="onCountryEnter($event)"
       (countryLeave)="onCountryLeave($event)"
       (countryClick)="onCountryClick($event)">
     </world-map>`,
   styles: [`:host { display: flex; flex-direction: column }`]
 })
-export class DemoComponent {
-  private settings: WorldMapSettings;
-  private metrics: Metrics = new Metrics(0, 0);
+export class DemoComponent implements AfterViewInit {
+  @ViewChild("theMap") theMap: WorldMapComponent;
   private currentCountry: string;
   private lastClick: string;
 
-  constructor() {
-    this.settings = new WorldMapSettings();
-  }
+  constructor() { }
 
-  onMetrics(metrics: Metrics) {
-    this.metrics = metrics;
+  ngAfterViewInit() {
+    this.theMap.setCustomization("fr", new CountryCustomization("blue", "red", "white", 5));
   }
 
   onCountryEnter(country: Country) {
@@ -46,5 +41,17 @@ export class DemoComponent {
 
   onCountryClick(country: Country) {
     this.lastClick = country.name;
+  }
+
+  goGreen() {
+    this.theMap.setForegroundColor("green");
+  }
+
+  goRed() {
+    this.theMap.setBackgroundColor("red");
+  }
+
+  goBlack() {
+    this.theMap.setCustomization("us", new CountryCustomization("black", "gray", "black", 5));
   }
 }
