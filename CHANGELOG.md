@@ -1,3 +1,6 @@
+## [1.2.1]
+- package description update
+
 ## [1.2.0]
 - moved to raphael rendering + customization
 
