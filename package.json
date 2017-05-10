@@ -11,8 +11,10 @@
   },
   "keywords": [
     "angular",
+    "typescript",
     "worldmap",
-    "canvas"
+    "world",
+    "map"
   ],
   "author": "Alban Gicquel",
   "license": "MIT",

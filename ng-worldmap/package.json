@@ -6,10 +6,19 @@
     "type": "git",
     "url": "git+ssh://git@github.com:synarque/ng-worldmap"
   },
-  "keywords": [],
+  "keywords": [
+    "angular",
+    "typescript",
+    "worldmap",
+    "world",
+    "map"
+  ],
+  "bugs": {
+    "url": "https://github.com/synarque/ng-worldmap/issues"
+  },
+  "homepage": "https://github.com/synarque/ng-worldmap#readme",
   "author": "Alban Gicquel",
   "license": "MIT",
-  "homepage": "https://github.com/synarque/ng-worldmap",
   "dependencies": {
     "@angular/common": "^4.0.0",
     "@angular/compiler": "^4.0.0",
