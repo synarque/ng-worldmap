@@ -38,14 +38,6 @@ Now in your template, just use the component:
 
 ## Customization
 
-There are two ways of customizing your world map:
-
-### Global
-
-The settings property of WorldMapComponent allows you to customize your world map:
-
-#### Definition
-
 ```typescript
 // Class used to customize specific countries' rendering
 class CountryCustomization {
@@ -81,7 +73,7 @@ class WorldMapComponent {
 }
 ```
 
-#### Usage
+### Example of customization
 
 ```typescript
 import { Component, ViewChild } from "@angular/core";

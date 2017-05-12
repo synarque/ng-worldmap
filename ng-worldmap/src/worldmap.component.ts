@@ -15,6 +15,8 @@ import "rxjs/add/observable/fromEvent";
 
 import * as Raphael from "raphael";
 
+import * as Hammer from "hammerjs";
+
 const defaultBgColor: string = "#c2c2c2";
 const defaultFgColor: string = "#e2e2e2";
 const defaultHighlightColor: string = "#f93";
@@ -22,6 +24,22 @@ const defaultBorderColor: string = "#a0a0a0";
 const defaultBorderWidth: number = 1;
 const defaultPadding: number = 1;
 const defaultZoom: string = "fr,gb";
+
+export class Point {
+  constructor(public x: number, public y: number) { };
+}
+
+export class Rect {
+  constructor(public left: number, public top: number, public width: number, public height: number) { }
+  scaled(scale: number, origin: Point): Rect {
+    let _scaledW = this.width * scale, _scaledH = this.height * scale;
+    let _wRatio = (origin.x - this.left) / this.width, _hRatio = (origin.y - this.top) / this.height;
+    return new Rect(origin.x - _wRatio * _scaledW, origin.y - _hRatio * _scaledH, Math.max(0.01, _scaledW), Math.max(0.01, _scaledH));
+  }
+  translated(delta: Point): Rect {
+    return new Rect(this.left + delta.x, this.top + delta.y, this.width, this.height);
+  }
+}
 
 export class CountryCustomization {
   constructor(
@@ -45,7 +63,7 @@ export class WorldMapSettings {
 
 @Component({
   selector: "world-map",
-  template: "<div #container class='container'></div>",
+  template: "<div #container class='container' (pan)='onPan($event)' (wheel)='onWheel($event)'></div>",
   styles: [
     `:host {
        display: flex;
@@ -73,13 +91,13 @@ export class WorldMapComponent implements AfterViewInit {
   private _drawOffsetY: number = 0;
   private _ratio: number = 0;
 
-  private _minX: number = Number.MAX_VALUE;
-  private _minY: number = Number.MAX_VALUE;
-  private _maxX: number = 0;
-  private _maxY: number = 0;
-
   private _paper: RaphaelPaper;
   private _countries: Map<string, RaphaelPath> = new Map<string, RaphaelPath>();
+
+  private _hammer: any;
+
+  private _rect: Rect;
+  private _scale: number = 1;
 
   private _settings: WorldMapSettings = new WorldMapSettings();
   @Output() public countryEnter: EventEmitter<Country> = new EventEmitter<Country>();
@@ -92,18 +110,23 @@ export class WorldMapComponent implements AfterViewInit {
     this._container = this._containerRef.nativeElement as HTMLElement;
     this._container.style.backgroundColor = this._settings.bgColor;
 
+    let _minX: number = Number.MAX_VALUE;
+    let _minY: number = Number.MAX_VALUE;
+    let _maxX: number = 0;
+    let _maxY: number = 0;
     // calculate zoom: find map range
     for (let country of countriesDictionnary) {
       let _country = country[1];
       for (let path = 0; path < _country.shape.length; path++) {
         for (let coord = 0; coord < _country.shape[path].length; coord++) {
-          this._minX = Math.min(this._minX, _country.shape[path][coord][0]);
-          this._maxX = Math.max(this._maxX, _country.shape[path][coord][0]);
-          this._minY = Math.min(this._minY, _country.shape[path][coord][1]);
-          this._maxY = Math.max(this._maxY, _country.shape[path][coord][1]);
+          _minX = Math.min(_minX, _country.shape[path][coord][0]);
+          _maxX = Math.max(_maxX, _country.shape[path][coord][0]);
+          _minY = Math.min(_minY, _country.shape[path][coord][1]);
+          _maxY = Math.max(_maxY, _country.shape[path][coord][1]);
         }
       }
     }
+    this._rect = new Rect(_minX, _minY, _maxX - _minX, _maxY - _minY);
 
     this._paper = Raphael(this._container, this._container.clientWidth, this._container.clientHeight);
     for (let country of countriesDictionnary) {
@@ -111,8 +134,7 @@ export class WorldMapComponent implements AfterViewInit {
     }
     this.drawCountryRaphael(countriesDictionnary.get("ls"), this._settings.fgColor);
     this.applyCustomizations();
-    let _ratio = this._container.clientHeight / this._container.clientWidth;
-    this._paper.setViewBox(this._minX, this._minY, this._maxX - this._minX, this._maxY - this._minY, true);
+    this.resetViewBox();
 
     this._ngZone.runOutsideAngular(() => {
       Observable.fromEvent<UIEvent>(window, "resize")
@@ -121,6 +143,32 @@ export class WorldMapComponent implements AfterViewInit {
           this._ngZone.run(() => this.doResize());
         });
     });
+
+    this._hammer = new Hammer.Manager(this._paper.canvas, {
+      recognizers: [
+        [Hammer.Pinch],
+        [Hammer.Pan, { threshold: 0, pointers: 0, direction: Hammer.DIRECTION_ALL }]
+      ], domEvents: true
+    });
+
+    this._hammer.on("pinch", (ev) => { });
+  }
+
+  private onPan(ev: any) {
+    this._rect = this._rect.translated(new Point(-ev.deltaX * this._scale, -ev.deltaY * this._scale));
+    this.resetViewBox();
+  }
+
+  private resetViewBox() {
+    this._paper.setViewBox(this._rect.left, this._rect.top, this._rect.width, this._rect.height, true);
+  }
+
+  private clientToWorld(x: number, y: number): Point {
+    let _point = this._paper.canvas.createSVGPoint();
+    _point.x = x;
+    _point.y = y;
+    _point = _point.matrixTransform(this._paper.canvas.getScreenCTM().inverse());
+    return new Point(_point.x, _point.y);
   }
 
   public setBackgroundColor(color: string) {
@@ -226,6 +274,15 @@ export class WorldMapComponent implements AfterViewInit {
       this.countryLeave.emit(country);
     });
     this._countries.set(country.alpha2, _svgPath);
+  }
+
+  private onWheel(event: WheelEvent) {
+    let _delta = (5 + (-1 / 40 * event.wheelDelta)) / 5;
+    let _point = this.clientToWorld(event.clientX, event.clientY);
+    this._rect = this._rect.scaled(_delta, _point);
+    this._scale = this._scale * _delta;
+    this.resetViewBox();
+    event.preventDefault();
   }
 }
 
