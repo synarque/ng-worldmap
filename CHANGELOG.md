@@ -1,3 +1,6 @@
+## [1.2.2]
+- Basic mousewheel support + rough pan
+
 ## [1.2.1]
 - package description update
 
